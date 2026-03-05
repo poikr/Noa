@@ -1,24 +1,14 @@
-//
-//  ContentView.swift
-//  Noa
-//
-//  Created by oein on 3/5/26.
-//
-
 import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView {
+            Tab("시간표", systemImage: "calendar") {
+                TimetableGridView()
+            }
+            Tab("설정", systemImage: "gearshape") {
+                SettingsView()
+            }
         }
-        .padding()
     }
-}
-
-#Preview {
-    ContentView()
 }

@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		282A46532F59A3310036A058 /* Noa Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 282A46522F59A3310036A058 /* Noa Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		282A46EF2F59AA450036A058 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 282A46EE2F59AA450036A058 /* WidgetKit.framework */; };
+		282A46F12F59AA450036A058 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 282A46F02F59AA450036A058 /* SwiftUI.framework */; };
+		282A47002F59AA450036A058 /* NoaWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 282A46EC2F59AA450036A058 /* NoaWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -17,6 +20,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 282A46512F59A3310036A058;
 			remoteInfo = "Noa Watch App";
+		};
+		282A46FE2F59AA450036A058 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 282A463D2F59A3300036A058 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 282A46EB2F59AA450036A058;
+			remoteInfo = NoaWidgetExtension;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -32,12 +42,50 @@
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		282A47052F59AA450036A058 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				282A47002F59AA450036A058 /* NoaWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		282A46452F59A3300036A058 /* Noa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Noa.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		282A46522F59A3310036A058 /* Noa Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Noa Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		282A46EC2F59AA450036A058 /* NoaWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NoaWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		282A46EE2F59AA450036A058 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		282A46F02F59AA450036A058 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		282A47012F59AA450036A058 /* Exceptions for "NoaWidget" folder in "NoaWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 282A46EB2F59AA450036A058 /* NoaWidgetExtension */;
+		};
+		282A47782F59C08B0036A058 /* Exceptions for "Noa Watch App" folder in "Noa" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppIcon.icon,
+			);
+			target = 282A46442F59A3300036A058 /* Noa */;
+		};
+		282A47792F59C08B0036A058 /* Exceptions for "Noa Watch App" folder in "NoaWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppIcon.icon,
+			);
+			target = 282A46EB2F59AA450036A058 /* NoaWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		282A46472F59A3300036A058 /* Noa */ = {
@@ -47,7 +95,24 @@
 		};
 		282A46562F59A3310036A058 /* Noa Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				282A47782F59C08B0036A058 /* Exceptions for "Noa Watch App" folder in "Noa" target */,
+				282A47792F59C08B0036A058 /* Exceptions for "Noa Watch App" folder in "NoaWidgetExtension" target */,
+			);
 			path = "Noa Watch App";
+			sourceTree = "<group>";
+		};
+		282A46702F59A3310036A058 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		282A46F22F59AA450036A058 /* NoaWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				282A47012F59AA450036A058 /* Exceptions for "NoaWidget" folder in "NoaWidgetExtension" target */,
+			);
+			path = NoaWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -67,14 +132,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		282A46E92F59AA450036A058 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				282A46F12F59AA450036A058 /* SwiftUI.framework in Frameworks */,
+				282A46EF2F59AA450036A058 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		282A463C2F59A3300036A058 = {
 			isa = PBXGroup;
 			children = (
+				282A46702F59A3310036A058 /* Shared */,
 				282A46472F59A3300036A058 /* Noa */,
 				282A46562F59A3310036A058 /* Noa Watch App */,
+				282A46F22F59AA450036A058 /* NoaWidget */,
+				282A46ED2F59AA450036A058 /* Frameworks */,
 				282A46462F59A3300036A058 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -84,8 +161,18 @@
 			children = (
 				282A46452F59A3300036A058 /* Noa.app */,
 				282A46522F59A3310036A058 /* Noa Watch App.app */,
+				282A46EC2F59AA450036A058 /* NoaWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		282A46ED2F59AA450036A058 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				282A46EE2F59AA450036A058 /* WidgetKit.framework */,
+				282A46F02F59AA450036A058 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -107,6 +194,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				282A46472F59A3300036A058 /* Noa */,
+				282A46702F59A3310036A058 /* Shared */,
 			);
 			name = Noa;
 			packageProductDependencies = (
@@ -122,13 +210,16 @@
 				282A464E2F59A3310036A058 /* Sources */,
 				282A464F2F59A3310036A058 /* Frameworks */,
 				282A46502F59A3310036A058 /* Resources */,
+				282A47052F59AA450036A058 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				282A46FF2F59AA450036A058 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				282A46562F59A3310036A058 /* Noa Watch App */,
+				282A46702F59A3310036A058 /* Shared */,
 			);
 			name = "Noa Watch App";
 			packageProductDependencies = (
@@ -136,6 +227,29 @@
 			productName = "Noa Watch App";
 			productReference = 282A46522F59A3310036A058 /* Noa Watch App.app */;
 			productType = "com.apple.product-type.application";
+		};
+		282A46EB2F59AA450036A058 /* NoaWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 282A47022F59AA450036A058 /* Build configuration list for PBXNativeTarget "NoaWidgetExtension" */;
+			buildPhases = (
+				282A46E82F59AA450036A058 /* Sources */,
+				282A46E92F59AA450036A058 /* Frameworks */,
+				282A46EA2F59AA450036A058 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				282A46702F59A3310036A058 /* Shared */,
+				282A46F22F59AA450036A058 /* NoaWidget */,
+			);
+			name = NoaWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = NoaWidgetExtension;
+			productReference = 282A46EC2F59AA450036A058 /* NoaWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -151,6 +265,9 @@
 						CreatedOnToolsVersion = 26.0;
 					};
 					282A46512F59A3310036A058 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					282A46EB2F59AA450036A058 = {
 						CreatedOnToolsVersion = 26.0;
 					};
 				};
@@ -171,6 +288,7 @@
 			targets = (
 				282A46442F59A3300036A058 /* Noa */,
 				282A46512F59A3310036A058 /* Noa Watch App */,
+				282A46EB2F59AA450036A058 /* NoaWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -184,6 +302,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		282A46502F59A3310036A058 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		282A46EA2F59AA450036A058 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -207,6 +332,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		282A46E82F59AA450036A058 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -214,6 +346,11 @@
 			isa = PBXTargetDependency;
 			target = 282A46512F59A3310036A058 /* Noa Watch App */;
 			targetProxy = 282A46542F59A3310036A058 /* PBXContainerItemProxy */;
+		};
+		282A46FF2F59AA450036A058 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 282A46EB2F59AA450036A058 /* NoaWidgetExtension */;
+			targetProxy = 282A46FE2F59AA450036A058 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -339,6 +476,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Noa Watch App/Noa Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = L29YB35382;
@@ -372,6 +510,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Noa Watch App/Noa Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = L29YB35382;
@@ -406,12 +545,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Noa/Noa.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = L29YB35382;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Noa;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -441,12 +582,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Noa/Noa.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = L29YB35382;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Noa;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -469,6 +612,75 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		282A47032F59AA450036A058 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = NoaWidget/NoaWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L29YB35382;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NoaWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NoaWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = kr.poi.Noa.watchkitapp.NoaWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		282A47042F59AA450036A058 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = NoaWidget/NoaWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L29YB35382;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NoaWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NoaWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = kr.poi.Noa.watchkitapp.NoaWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Release;
 		};
@@ -498,6 +710,15 @@
 			buildConfigurations = (
 				282A46642F59A3310036A058 /* Debug */,
 				282A46652F59A3310036A058 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		282A47022F59AA450036A058 /* Build configuration list for PBXNativeTarget "NoaWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				282A47032F59AA450036A058 /* Debug */,
+				282A47042F59AA450036A058 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

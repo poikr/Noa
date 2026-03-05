@@ -1,10 +1,3 @@
-//
-//  NoaWidgetBundle.swift
-//  NoaWidget
-//
-//  Created by oein on 3/5/26.
-//
-
 import WidgetKit
 import SwiftUI
 
@@ -12,6 +5,5 @@ import SwiftUI
 struct NoaWidgetBundle: WidgetBundle {
     var body: some Widget {
         NoaWidget()
-        NoaWidgetControl()
     }
 }

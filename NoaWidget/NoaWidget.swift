@@ -63,6 +63,13 @@ private func urgencyColor(remaining: TimeInterval, normal: Color) -> Color {
     remaining <= 180 ? .red : normal
 }
 
+private func periodDisplayName(_ period: Int) -> String {
+    let timetable = TimetableStore.loadFromDefaults()
+    guard period < timetable.periodTimes.count else { return "\(period + 1)교시" }
+    return timetable.periodTimes[period].displayName(period: period)
+}
+
+
 /// Returns a live countdown Text when ≤ 3 min, otherwise static "N분" text
 private func countdownText(remaining: TimeInterval, entryDate: Date) -> Text {
     if remaining <= 180 {
@@ -183,7 +190,7 @@ struct RectangularView: View {
                     Image(systemName: "circle.fill")
                         .font(.system(size: 6))
                         .foregroundStyle(urgencyColor(remaining: remaining, normal: .green))
-                    Text("\(period + 1)교시 수업 중")
+                    Text("\(periodDisplayName(period)) 수업 중")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -223,10 +230,10 @@ struct RectangularView: View {
                     .font(.headline)
                     .lineLimit(1)
                 if remaining <= 180 {
-                    (Text("\(nextPeriod + 1)교시 ") + countdownText(remaining: remaining, entryDate: entryDate).foregroundColor(.red) + Text(" 후").foregroundColor(.red))
+                    (Text("\(periodDisplayName(nextPeriod)) ") + countdownText(remaining: remaining, entryDate: entryDate).foregroundColor(.red) + Text(" 후").foregroundColor(.red))
                         .font(.caption)
                 } else {
-                    (Text("\(nextPeriod + 1)교시 ") + Text("\(ScheduleEngine.formatRemainingMinutes(remaining))분 후").foregroundColor(.orange))
+                    (Text("\(periodDisplayName(nextPeriod)) ") + Text("\(ScheduleEngine.formatRemainingMinutes(remaining))분 후").foregroundColor(.orange))
                         .font(.caption)
                 }
             }

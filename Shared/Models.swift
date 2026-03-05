@@ -45,6 +45,19 @@ struct PeriodTime: Codable, Equatable, Sendable {
     var startMinute: Int
     var endHour: Int
     var endMinute: Int
+    var name: String
+
+    init(startHour: Int, startMinute: Int, endHour: Int, endMinute: Int, name: String = "") {
+        self.startHour = startHour
+        self.startMinute = startMinute
+        self.endHour = endHour
+        self.endMinute = endMinute
+        self.name = name
+    }
+
+    func displayName(period: Int) -> String {
+        name.isEmpty ? "\(period + 1)교시" : name
+    }
 
     var startTotalMinutes: Int { startHour * 60 + startMinute }
     var endTotalMinutes: Int { endHour * 60 + endMinute }

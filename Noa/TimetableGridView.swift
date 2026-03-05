@@ -43,8 +43,15 @@ struct TimetableGridView: View {
                                 editingPeriod = EditingPeriod(value: period)
                             } label: {
                                 VStack(spacing: 1) {
-                                    Text("\(period + 1)")
-                                        .font(.caption.bold())
+                                    if period < store.timetable.periodTimes.count && !store.timetable.periodTimes[period].name.isEmpty {
+                                        Text(store.timetable.periodTimes[period].name)
+                                            .font(.system(size: 10, weight: .bold))
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.7)
+                                    } else {
+                                        Text("\(period + 1)")
+                                            .font(.caption.bold())
+                                    }
                                     if period < store.timetable.periodTimes.count {
                                         Text(store.timetable.periodTimes[period].startString)
                                             .font(.system(size: 9))

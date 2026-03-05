@@ -7,6 +7,7 @@ struct PeriodTimeEditSheet: View {
 
     @State private var startDate: Date
     @State private var endDate: Date
+    @State private var periodName: String
 
     init(store: TimetableStore, period: Int) {
         self.store = store
@@ -16,12 +17,14 @@ struct PeriodTimeEditSheet: View {
         let base = calendar.startOfDay(for: Date())
         _startDate = State(initialValue: calendar.date(bySettingHour: periodTime.startHour, minute: periodTime.startMinute, second: 0, of: base)!)
         _endDate = State(initialValue: calendar.date(bySettingHour: periodTime.endHour, minute: periodTime.endMinute, second: 0, of: base)!)
+        _periodName = State(initialValue: periodTime.name)
     }
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("\(period + 1)교시 시간 설정") {
+                Section("\(period + 1)교시 설정") {
+                    TextField("교시 이름 (예: 점심, 방과후)", text: $periodName)
                     DatePicker("시작 시각", selection: $startDate, displayedComponents: .hourAndMinute)
                     DatePicker("종료 시각", selection: $endDate, displayedComponents: .hourAndMinute)
                 }
@@ -50,7 +53,8 @@ struct PeriodTimeEditSheet: View {
                             startHour: startComps.hour ?? 0,
                             startMinute: startComps.minute ?? 0,
                             endHour: endComps.hour ?? 0,
-                            endMinute: endComps.minute ?? 0
+                            endMinute: endComps.minute ?? 0,
+                            name: periodName.trimmingCharacters(in: .whitespaces)
                         )
                         ConnectivityManager.shared.sendTimetable()
                         dismiss()

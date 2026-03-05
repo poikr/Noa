@@ -34,9 +34,11 @@ struct TodayScheduleView: View {
                     let isLastEnded = isPast && item.period == lastPastPeriod
 
                     HStack(spacing: 6) {
-                        Text("\(item.period + 1)")
+                        Text(periodLabel(item.period))
                             .font(.caption2.bold())
                             .frame(width: 16)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
 
                         VStack(alignment: .leading, spacing: 1) {
                             HStack {
@@ -80,6 +82,14 @@ struct TodayScheduleView: View {
             }
             .padding(.horizontal, 4)
         }
+    }
+
+    private func periodLabel(_ period: Int) -> String {
+        guard period < store.timetable.periodTimes.count,
+              !store.timetable.periodTimes[period].name.isEmpty else {
+            return "\(period + 1)"
+        }
+        return store.timetable.periodTimes[period].name
     }
 
     private func isCurrentPeriod(period: Int, date: Date) -> Bool {

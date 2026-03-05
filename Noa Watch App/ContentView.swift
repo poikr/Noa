@@ -39,6 +39,11 @@ struct WatchMainView: View {
         }
     }
 
+    private func nextPeriodDisplayName(period: Int) -> String {
+        guard period < store.timetable.periodTimes.count else { return "\(period + 1)교시" }
+        return store.timetable.periodTimes[period].displayName(period: period)
+    }
+
     private func urgencyColor(remaining: TimeInterval, normal: Color) -> Color {
         remaining <= 180 ? .red : normal
     }
@@ -81,7 +86,7 @@ struct WatchMainView: View {
                     }
                 }
 
-                Text("\(period + 1)교시")
+                Text(nextPeriodDisplayName(period: period))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -113,7 +118,7 @@ struct WatchMainView: View {
                     .foregroundStyle(urgencyColor(remaining: remaining, normal: .orange))
 
                 HStack(spacing: 4) {
-                    Text("\(nextPeriod + 1)교시")
+                    Text(nextPeriodDisplayName(period: nextPeriod))
                         .font(.caption2)
                     if nextPeriod < store.timetable.periodTimes.count {
                         Text(store.timetable.periodTimes[nextPeriod].startString)

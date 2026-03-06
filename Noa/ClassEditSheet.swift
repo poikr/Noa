@@ -10,6 +10,7 @@ struct ClassEditSheet: View {
     @State private var teacher: String
     @State private var classroom: String
     @State private var colorName: String
+    @State private var isFood: Bool
 
     init(store: TimetableStore, weekday: Weekday, period: Int) {
         self.store = store
@@ -20,6 +21,7 @@ struct ClassEditSheet: View {
         _teacher = State(initialValue: entry.teacher)
         _classroom = State(initialValue: entry.classroom)
         _colorName = State(initialValue: entry.colorName)
+        _isFood = State(initialValue: entry.isFood)
     }
 
     var body: some View {
@@ -29,6 +31,7 @@ struct ClassEditSheet: View {
                     TextField("과목명", text: $subject)
                     TextField("선생님", text: $teacher)
                     TextField("교실", text: $classroom)
+                    Toggle("급식/자습", isOn: $isFood)
                 }
 
                 Section("색상") {
@@ -73,7 +76,8 @@ struct ClassEditSheet: View {
                             subject: subject.trimmingCharacters(in: .whitespaces),
                             teacher: teacher.trimmingCharacters(in: .whitespaces),
                             classroom: classroom.trimmingCharacters(in: .whitespaces),
-                            colorName: colorName
+                            colorName: colorName,
+                            isFood: isFood
                         )
                         store.timetable.setClassEntry(entry, for: weekday, period: period)
                         ConnectivityManager.shared.sendTimetable()

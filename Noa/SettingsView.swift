@@ -33,6 +33,45 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("등교 시간") {
+                    HStack {
+                        Text("등교 시간")
+                        Spacer()
+                        Picker("시", selection: Binding(
+                            get: { store.timetable.arrivalHour },
+                            set: {
+                                store.timetable.arrivalHour = $0
+                                ConnectivityManager.shared.sendTimetable()
+                            }
+                        )) {
+                            ForEach(4..<13, id: \.self) { h in
+                                Text("\(h)시").tag(h)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        Picker("분", selection: Binding(
+                            get: { store.timetable.arrivalMinute },
+                            set: {
+                                store.timetable.arrivalMinute = $0
+                                ConnectivityManager.shared.sendTimetable()
+                            }
+                        )) {
+                            ForEach(Array(stride(from: 0, to: 60, by: 5)), id: \.self) { m in
+                                Text(String(format: "%02d분", m)).tag(m)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                    }
+                }
+
+                Section("기타 일정") {
+                    NavigationLink("기타 일정 (학원 등)") {
+                        ExtraScheduleListView(store: store)
+                    }
+                }
+
                 Section("교시 수") {
                     Stepper(
                         "\(store.timetable.periodCount)교시",

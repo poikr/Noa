@@ -19,11 +19,11 @@ struct ScheduleTimelineProvider: TimelineProvider {
         let now = Date()
         let calendar = Calendar.current
 
-        // Collect important time points: period starts, ends, and 3min-before-end
         var keyDates: Set<Date> = []
+        let todayStart = calendar.startOfDay(for: now)
 
         if let weekday = Weekday.from(date: now) {
-            let todayStart = calendar.startOfDay(for: now)
+            // Period start/end/warning times
             for period in 0..<timetable.periodCount where period < timetable.periodTimes.count {
                 let pt = timetable.periodTimes[period]
                 let start = calendar.date(bySettingHour: pt.startHour, minute: pt.startMinute, second: 0, of: todayStart)!
@@ -32,6 +32,22 @@ struct ScheduleTimelineProvider: TimelineProvider {
                 let warnStart = calendar.date(byAdding: .minute, value: -3, to: start)!
                 keyDates.formUnion([start, end, warn, warnStart])
             }
+
+            // Extra schedule start/end times
+            for extra in timetable.todayExtraSchedules(for: weekday) {
+                let start = calendar.date(bySettingHour: extra.startHour, minute: extra.startMinute, second: 0, of: todayStart)!
+                let end = calendar.date(bySettingHour: extra.endHour, minute: extra.endMinute, second: 0, of: todayStart)!
+                let warn = calendar.date(byAdding: .minute, value: -3, to: end)!
+                let warnStart = calendar.date(byAdding: .minute, value: -3, to: start)!
+                keyDates.formUnion([start, end, warn, warnStart])
+            }
+
+            // Arrival time key dates: 4AM, arrivalTime-30min, arrivalTime-3min, arrivalTime
+            let fourAM = calendar.date(bySettingHour: 4, minute: 0, second: 0, of: todayStart)!
+            let arrivalTime = calendar.date(bySettingHour: timetable.arrivalHour, minute: timetable.arrivalMinute, second: 0, of: todayStart)!
+            let arrival30 = calendar.date(byAdding: .minute, value: -30, to: arrivalTime)!
+            let arrival3 = calendar.date(byAdding: .minute, value: -3, to: arrivalTime)!
+            keyDates.formUnion([fourAM, arrivalTime, arrival30, arrival3])
         }
 
         // Generate entries every minute for 60 minutes + key transition dates
@@ -64,11 +80,11 @@ private func urgencyColor(remaining: TimeInterval, normal: Color) -> Color {
 }
 
 private func periodDisplayName(_ period: Int) -> String {
+    guard period >= 0 else { return "" }
     let timetable = TimetableStore.loadFromDefaults()
     guard period < timetable.periodTimes.count else { return "\(period + 1)교시" }
     return timetable.periodTimes[period].displayName(period: period)
 }
-
 
 /// Returns a live countdown Text when ≤ 3 min, otherwise static "N분" text
 private func countdownText(remaining: TimeInterval, entryDate: Date) -> Text {
@@ -88,7 +104,7 @@ struct CircularView: View {
 
     var body: some View {
         switch state {
-        case .inClass(_, let entry, let remaining, _):
+        case .inClass(_, let entry, let remaining, _, let isFood):
             ZStack {
                 AccessoryWidgetBackground()
                 VStack(spacing: 1) {
@@ -96,10 +112,10 @@ struct CircularView: View {
                         .font(.system(.caption2, design: .rounded).bold())
                         .minimumScaleFactor(0.5)
                         .lineLimit(1)
-                        .foregroundStyle(urgencyColor(remaining: remaining, normal: .green))
+                        .foregroundStyle(urgencyColor(remaining: remaining, normal: isFood ? .orange : .green))
                     countdownText(remaining: remaining, entryDate: entryDate)
                         .font(.system(.title3, design: .rounded).bold())
-                        .foregroundStyle(urgencyColor(remaining: remaining, normal: .primary))
+                        .foregroundStyle(urgencyColor(remaining: remaining, normal: isFood ? .orange : .primary))
                 }
             }
 
@@ -114,6 +130,29 @@ struct CircularView: View {
                     countdownText(remaining: remaining, entryDate: entryDate)
                         .font(.system(.title3, design: .rounded).bold())
                         .foregroundStyle(urgencyColor(remaining: remaining, normal: .orange))
+                }
+            }
+
+        case .goingToSchool(_, let arrivalRemaining, _):
+            ZStack {
+                AccessoryWidgetBackground()
+                if arrivalRemaining <= 1800 {
+                    VStack(spacing: 1) {
+                        Text("등교")
+                            .font(.system(.caption2, design: .rounded).bold())
+                            .foregroundStyle(urgencyColor(remaining: arrivalRemaining, normal: .orange))
+                        countdownText(remaining: arrivalRemaining, entryDate: entryDate)
+                            .font(.system(.title3, design: .rounded).bold())
+                            .foregroundStyle(urgencyColor(remaining: arrivalRemaining, normal: .orange))
+                    }
+                } else {
+                    VStack(spacing: 0) {
+                        Image(systemName: "sunrise")
+                            .font(.body)
+                        Text("등교")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
 
@@ -184,35 +223,62 @@ struct RectangularView: View {
     @ViewBuilder
     private var content: some View {
         switch state {
-        case .inClass(let period, let entry, let remaining, let nextEntry):
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 4) {
-                    Image(systemName: "circle.fill")
-                        .font(.system(size: 6))
-                        .foregroundStyle(urgencyColor(remaining: remaining, normal: .green))
-                    Text("\(periodDisplayName(period)) 수업 중")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                HStack(spacing: 0) {
-                    Text(entry.subject)
-                        .font(.headline)
+        case .inClass(let period, let entry, let remaining, let nextEntry, let isFood):
+            if isFood {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 6))
+                            .foregroundStyle(urgencyColor(remaining: remaining, normal: .orange))
+                        Text(entry.subject)
+                            .font(.caption2)
+                            .foregroundStyle(urgencyColor(remaining: remaining, normal: .orange))
+                    }
                     if let next = nextEntry {
-                        Text(" / \(next.subject)")
+                        Text(next.subject)
                             .font(.headline)
-                            .fontWeight(.light)
-                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    if remaining <= 180 {
+                        (countdownText(remaining: remaining, entryDate: entryDate) + Text(" 남음"))
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    } else {
+                        Text("\(ScheduleEngine.formatRemainingMinutes(remaining))분 남음")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
                     }
                 }
-                .lineLimit(1)
-                if remaining <= 180 {
-                    (countdownText(remaining: remaining, entryDate: entryDate) + Text(" 남음"))
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                } else {
-                    Text("\(ScheduleEngine.formatRemainingMinutes(remaining))분 남음")
-                        .font(.caption)
-                        .foregroundStyle(.green)
+            } else {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 6))
+                            .foregroundStyle(urgencyColor(remaining: remaining, normal: .green))
+                        Text("\(periodDisplayName(period)) 수업 중")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    HStack(spacing: 0) {
+                        Text(entry.subject)
+                            .font(.headline)
+                        if let next = nextEntry {
+                            Text(" / \(next.subject)")
+                                .font(.headline)
+                                .fontWeight(.light)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .lineLimit(1)
+                    if remaining <= 180 {
+                        (countdownText(remaining: remaining, entryDate: entryDate) + Text(" 남음"))
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    } else {
+                        Text("\(ScheduleEngine.formatRemainingMinutes(remaining))분 남음")
+                            .font(.caption)
+                            .foregroundStyle(.green)
+                    }
                 }
             }
 
@@ -235,6 +301,44 @@ struct RectangularView: View {
                 } else {
                     (Text("\(periodDisplayName(nextPeriod)) ") + Text("\(ScheduleEngine.formatRemainingMinutes(remaining))분 후").foregroundColor(.orange))
                         .font(.caption)
+                }
+            }
+
+        case .goingToSchool(let firstEntry, let arrivalRemaining, let classRemaining):
+            if arrivalRemaining <= 1800 {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 6))
+                            .foregroundStyle(urgencyColor(remaining: arrivalRemaining, normal: .orange))
+                        Text("등교")
+                            .font(.caption2)
+                            .foregroundStyle(urgencyColor(remaining: arrivalRemaining, normal: .orange))
+                    }
+                    Text(firstEntry.subject)
+                        .font(.headline)
+                        .lineLimit(1)
+                    if arrivalRemaining <= 180 {
+                        (Text("지각 전까지 ") + countdownText(remaining: arrivalRemaining, entryDate: entryDate))
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    } else {
+                        Text("지각 전까지 \(ScheduleEngine.formatRemainingMinutes(arrivalRemaining))분")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("등교")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(firstEntry.subject)
+                        .font(.headline)
+                        .lineLimit(1)
+                    Text("\(ScheduleEngine.formatRemainingMinutes(classRemaining))분 후 첫 수업")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -302,7 +406,7 @@ struct InlineView: View {
 
     var body: some View {
         switch state {
-        case .inClass(_, let entry, let remaining, _):
+        case .inClass(_, let entry, let remaining, _, _):
             if remaining <= 180 {
                 Text("\(entry.subject) \(timerInterval: entryDate...entryDate.addingTimeInterval(remaining), countsDown: true)")
             } else {
@@ -314,6 +418,17 @@ struct InlineView: View {
                 Text("\(nextEntry.subject) \(timerInterval: entryDate...entryDate.addingTimeInterval(remaining), countsDown: true)")
             } else {
                 Text("\(nextEntry.subject) \(ScheduleEngine.formatRemainingMinutes(remaining))분후")
+            }
+
+        case .goingToSchool(_, let arrivalRemaining, _):
+            if arrivalRemaining <= 1800 {
+                if arrivalRemaining <= 180 {
+                    Text("지각 전까지 \(timerInterval: entryDate...entryDate.addingTimeInterval(arrivalRemaining), countsDown: true)")
+                } else {
+                    Text("지각 전까지 \(ScheduleEngine.formatRemainingMinutes(arrivalRemaining))분")
+                }
+            } else {
+                Text("등교")
             }
 
         case .beforeSchool(_, let firstEntry, let remaining):
@@ -343,11 +458,11 @@ struct CornerView: View {
 
     var body: some View {
         switch state {
-        case .inClass(_, let entry, let remaining, _):
+        case .inClass(_, let entry, let remaining, _, let isFood):
             VStack {
                 countdownText(remaining: remaining, entryDate: entryDate)
                     .font(.system(.title, design: .rounded).bold())
-                    .foregroundStyle(urgencyColor(remaining: remaining, normal: .primary))
+                    .foregroundStyle(urgencyColor(remaining: remaining, normal: isFood ? .orange : .primary))
                 Text(entry.subject)
                     .font(.system(size: 10))
             }
@@ -359,6 +474,24 @@ struct CornerView: View {
                     .foregroundStyle(urgencyColor(remaining: remaining, normal: .primary))
                 Text(nextEntry.subject)
                     .font(.system(size: 10))
+            }
+
+        case .goingToSchool(_, let arrivalRemaining, _):
+            if arrivalRemaining <= 1800 {
+                VStack {
+                    countdownText(remaining: arrivalRemaining, entryDate: entryDate)
+                        .font(.system(.title, design: .rounded).bold())
+                        .foregroundStyle(urgencyColor(remaining: arrivalRemaining, normal: .orange))
+                    Text("등교")
+                        .font(.system(size: 10))
+                }
+            } else {
+                VStack {
+                    Image(systemName: "sunrise")
+                        .font(.title3)
+                    Text("등교")
+                        .font(.system(size: 10))
+                }
             }
 
         case .beforeSchool(_, let firstEntry, let remaining):

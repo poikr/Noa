@@ -27,6 +27,8 @@ struct SettingsView: View {
     @State private var showImportError = false
     @State private var importErrorMessage = ""
     @State private var showImportSuccess = false
+    @State private var showPasteImport = false
+    @State private var pasteText = ""
 
     private let minuteOptions = [1, 3, 5, 10, 15]
 
@@ -140,12 +142,27 @@ struct SettingsView: View {
                         ) {
                             Label("시간표 내보내기", systemImage: "square.and.arrow.up")
                         }
+
+                        Button {
+                            if let str = String(data: data, encoding: .utf8) {
+                                UIPasteboard.general.string = str
+                            }
+                        } label: {
+                            Label("클립보드에 복사", systemImage: "doc.on.doc")
+                        }
                     }
 
                     Button {
                         showImporter = true
                     } label: {
-                        Label("시간표 불러오기", systemImage: "square.and.arrow.down")
+                        Label("파일에서 불러오기", systemImage: "square.and.arrow.down")
+                    }
+
+                    Button {
+                        pasteText = UIPasteboard.general.string ?? ""
+                        showPasteImport = true
+                    } label: {
+                        Label("클립보드에서 불러오기", systemImage: "doc.on.clipboard")
                     }
                 }
 
@@ -156,7 +173,7 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("설정")
-            .fileImporter(isPresented: $showImporter, allowedContentTypes: [.json]) { result in
+            .fileImporter(isPresented: $showImporter, allowedContentTypes: [.json, .plainText, .data]) { result in
                 switch result {
                 case .success(let url):
                     guard url.startAccessingSecurityScopedResource() else {
@@ -200,6 +217,30 @@ struct SettingsView: View {
                 Button("확인") {}
             } message: {
                 Text(importErrorMessage)
+            }
+            .alert("클립보드에서 불러오기", isPresented: $showPasteImport) {
+                Button("불러오기") {
+                    guard let data = pasteText.data(using: .utf8) else {
+                        importErrorMessage = "클립보드 내용을 읽을 수 없습니다."
+                        showImportError = true
+                        return
+                    }
+                    do {
+                        try store.importJSON(from: data)
+                        ConnectivityManager.shared.sendTimetable()
+                        NotificationManager.shared.scheduleNotifications(
+                            for: store.timetable,
+                            minutesBefore: store.notificationMinutesBefore
+                        )
+                        showImportSuccess = true
+                    } catch {
+                        importErrorMessage = error.localizedDescription
+                        showImportError = true
+                    }
+                }
+                Button("취소", role: .cancel) {}
+            } message: {
+                Text("클립보드의 내용으로 시간표를 불러올까요?")
             }
             .alert("불러오기 완료", isPresented: $showImportSuccess) {
                 Button("확인") {}

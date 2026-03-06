@@ -48,6 +48,14 @@ iPhone (edit timetable)
 - **ConnectivityManager.swift**: `WCSessionDelegate` with `nonisolated` delegate methods dispatching to `@MainActor` via `Task`.
 - **NotificationManager.swift**: Schedules `UNCalendarNotificationTrigger` weekly repeating notifications.
 
+### JSON Backward Compatibility
+
+All model types use custom `init(from decoder:)` with `decodeIfPresent` for fields added after v1. When adding new fields to `Codable` models, always use `decodeIfPresent` with a sensible default so that JSON from older versions still decodes. Currently optional fields:
+- `PeriodTime.name` (default: `""`)
+- `ClassEntry.isFood` (default: `false`)
+- `Timetable.extraSchedules` (default: `[]`)
+- `Timetable.arrivalHour` / `arrivalMinute` (default: `8` / `30`)
+
 ### Swift Concurrency Notes
 
 The project uses `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES`. All types are `@MainActor` by default. WCSessionDelegate methods must be explicitly `nonisolated`.
@@ -62,6 +70,14 @@ The project uses `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_UPCOMING
 - **Orange**: break time
 - **Red**: ≤ 3 minutes remaining (urgency) or END badge
 - Colors determined by `urgencyColor(remaining:normal:)` helper
+
+### Slot Key Convention
+
+Timetable slots are stored as a `[String: ClassEntry]` dictionary with keys formatted as `"{weekday.rawValue}_{periodIndex}"` (e.g., `"2_0"` = Monday period 0). Weekday raw values follow `Calendar.component(.weekday)`: Monday=2 through Friday=6.
+
+### ScheduleEngine Slot Merging
+
+`ScheduleEngine.buildSlots()` merges regular class periods and extra schedules into a single sorted timeline. Extra schedules use `period: -1`. The engine uses seconds-of-day for all time comparisons. Before 4AM is treated as `afterSchool` (previous day).
 
 ## Bundle IDs
 

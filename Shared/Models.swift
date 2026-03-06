@@ -55,6 +55,15 @@ struct PeriodTime: Codable, Equatable, Sendable {
         self.name = name
     }
 
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        startHour = try container.decode(Int.self, forKey: .startHour)
+        startMinute = try container.decode(Int.self, forKey: .startMinute)
+        endHour = try container.decode(Int.self, forKey: .endHour)
+        endMinute = try container.decode(Int.self, forKey: .endMinute)
+        name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
+    }
+
     func displayName(period: Int) -> String {
         name.isEmpty ? "\(period + 1)교시" : name
     }

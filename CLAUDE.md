@@ -43,7 +43,7 @@ iPhone (edit timetable)
 ### Key Shared Components
 
 - **Models.swift**: `Weekday`, `PeriodTime`, `ClassEntry`, `Timetable` — all `Codable`, `Sendable` value types
-- **ScheduleEngine.swift**: Pure function `currentState(for:timetable:)` returns `ScheduleState` enum (inClass, breakTime, beforeSchool, afterSchool, weekend, noClass). This is the core logic used by Watch app, Widget, and complications.
+- **ScheduleEngine.swift**: Pure function `currentState(for:timetable:)` returns `ScheduleState` enum (inClass, breakTime, goingToSchool, beforeSchool, afterSchool, weekend, noClass). This is the core logic used by Watch app, Widget, and complications. Weekend days (Sat/Sun) with no slots return `.weekend`; weekdays with no slots return `.noClass`.
 - **TimetableStore.swift**: `@Observable` singleton using App Group UserDefaults. Widget uses `loadFromDefaults()` (nonisolated static method) instead of the singleton.
 - **ConnectivityManager.swift**: `WCSessionDelegate` with `nonisolated` delegate methods dispatching to `@MainActor` via `Task`.
 - **NotificationManager.swift**: Schedules `UNCalendarNotificationTrigger` weekly repeating notifications.
@@ -73,7 +73,7 @@ The project uses `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_UPCOMING
 
 ### Slot Key Convention
 
-Timetable slots are stored as a `[String: ClassEntry]` dictionary with keys formatted as `"{weekday.rawValue}_{periodIndex}"` (e.g., `"2_0"` = Monday period 0). Weekday raw values follow `Calendar.component(.weekday)`: Monday=2 through Friday=6.
+Timetable slots are stored as a `[String: ClassEntry]` dictionary with keys formatted as `"{weekday.rawValue}_{periodIndex}"` (e.g., `"2_0"` = Monday period 0). Weekday raw values follow `Calendar.component(.weekday)`: Sunday=1, Monday=2 through Saturday=7.
 
 ### ScheduleEngine Slot Merging
 

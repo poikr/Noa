@@ -4,31 +4,37 @@ import SwiftUI
 // MARK: - Weekday
 
 enum Weekday: Int, Codable, CaseIterable, Identifiable, Sendable {
+    case sunday = 1
     case monday = 2
     case tuesday = 3
     case wednesday = 4
     case thursday = 5
     case friday = 6
+    case saturday = 7
 
     nonisolated var id: Int { rawValue }
 
     var displayName: String {
         switch self {
+        case .sunday: "일"
         case .monday: "월"
         case .tuesday: "화"
         case .wednesday: "수"
         case .thursday: "목"
         case .friday: "금"
+        case .saturday: "토"
         }
     }
 
     var fullDisplayName: String {
         switch self {
+        case .sunday: "일요일"
         case .monday: "월요일"
         case .tuesday: "화요일"
         case .wednesday: "수요일"
         case .thursday: "목요일"
         case .friday: "금요일"
+        case .saturday: "토요일"
         }
     }
 

@@ -61,6 +61,9 @@ enum ScheduleEngine {
 
         let slots = buildSlots(timetable: timetable, weekday: weekday)
         guard !slots.isEmpty else {
+            if weekday == .saturday || weekday == .sunday {
+                return .weekend
+            }
             return .noClass
         }
 

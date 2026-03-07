@@ -39,8 +39,11 @@ struct WatchMainView: View {
         }
     }
 
-    private func nextPeriodDisplayName(period: Int) -> String {
-        guard period >= 0, period < store.timetable.periodTimes.count else { return "\(period + 1)교시" }
+    private func periodDisplayName(period: Int, entry: ClassEntry? = nil) -> String {
+        if period < 0 {
+            return entry?.subject ?? ""
+        }
+        guard period < store.timetable.periodTimes.count else { return "\(period + 1)교시" }
         return store.timetable.periodTimes[period].displayName(period: period)
     }
 
@@ -83,11 +86,9 @@ struct WatchMainView: View {
                         .font(.system(.title2, design: .monospaced).bold())
                         .foregroundStyle(urgencyColor(remaining: remaining, normal: .orange))
 
-                    if period >= 0 {
-                        Text(nextPeriodDisplayName(period: period))
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+                    Text(periodDisplayName(period: period, entry: entry))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
                 .padding()
             } else {
@@ -126,11 +127,9 @@ struct WatchMainView: View {
                         }
                     }
 
-                    if period >= 0 {
-                        Text(nextPeriodDisplayName(period: period))
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+                    Text(periodDisplayName(period: period, entry: entry))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
                 .padding()
             }
@@ -161,10 +160,8 @@ struct WatchMainView: View {
                     .foregroundStyle(urgencyColor(remaining: remaining, normal: .orange))
 
                 HStack(spacing: 4) {
-                    if nextPeriod >= 0 {
-                        Text(nextPeriodDisplayName(period: nextPeriod))
-                            .font(.caption2)
-                    }
+                    Text(periodDisplayName(period: nextPeriod, entry: nextEntry))
+                        .font(.caption2)
                     if nextPeriod >= 0, nextPeriod < store.timetable.periodTimes.count {
                         Text(store.timetable.periodTimes[nextPeriod].startString)
                             .font(.caption2)

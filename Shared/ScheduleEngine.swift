@@ -40,8 +40,35 @@ enum ScheduleEngine {
         let todayExtras = timetable.todayExtraSchedules(for: weekday)
         for extra in todayExtras {
             let entry = ClassEntry(subject: extra.name, teacher: "", classroom: "", colorName: extra.colorName)
+            if extra.spansNextDay {
+                // Starting day portion: startTime → midnight (24:00)
+                slots.append(ScheduleSlot(
+                    startSeconds: extra.startHour * 3600 + extra.startMinute * 60,
+                    endSeconds: 24 * 3600,
+                    entry: entry,
+                    period: -1,
+                    isFood: false,
+                    isExtra: true
+                ))
+            } else {
+                slots.append(ScheduleSlot(
+                    startSeconds: extra.startHour * 3600 + extra.startMinute * 60,
+                    endSeconds: extra.endHour * 3600 + extra.endMinute * 60,
+                    entry: entry,
+                    period: -1,
+                    isFood: false,
+                    isExtra: true
+                ))
+            }
+        }
+
+        // Add overnight extras from previous day (midnight → endTime)
+        let previousDay = weekday.previousDay
+        let overnightExtras = timetable.todayExtraSchedules(for: previousDay).filter { $0.spansNextDay }
+        for extra in overnightExtras {
+            let entry = ClassEntry(subject: extra.name, teacher: "", classroom: "", colorName: extra.colorName)
             slots.append(ScheduleSlot(
-                startSeconds: extra.startHour * 3600 + extra.startMinute * 60,
+                startSeconds: 0,
                 endSeconds: extra.endHour * 3600 + extra.endMinute * 60,
                 entry: entry,
                 period: -1,
@@ -50,8 +77,33 @@ enum ScheduleEngine {
             ))
         }
 
+        // Filter out invalid slots (end <= start)
+        slots = slots.filter { $0.endSeconds > $0.startSeconds }
+
+        // Sort by start time (earlier start = higher priority)
         slots.sort { $0.startSeconds < $1.startSeconds }
-        return slots
+
+        // Resolve overlaps: earlier-starting slot wins, trim or remove later ones
+        var resolved: [ScheduleSlot] = []
+        for slot in slots {
+            if let last = resolved.last, slot.startSeconds < last.endSeconds {
+                // Overlapping: trim this slot's start to after the previous slot ends
+                if last.endSeconds < slot.endSeconds {
+                    resolved.append(ScheduleSlot(
+                        startSeconds: last.endSeconds,
+                        endSeconds: slot.endSeconds,
+                        entry: slot.entry,
+                        period: slot.period,
+                        isFood: slot.isFood,
+                        isExtra: slot.isExtra
+                    ))
+                }
+                // Otherwise this slot is fully covered → skip
+            } else {
+                resolved.append(slot)
+            }
+        }
+        return resolved
     }
 
     static func currentState(for date: Date, timetable: Timetable) -> ScheduleState {
@@ -72,8 +124,20 @@ enum ScheduleEngine {
         let currentSeconds = (components.hour ?? 0) * 3600 + (components.minute ?? 0) * 60 + (components.second ?? 0)
         let hour = components.hour ?? 0
 
-        // Before 4AM → afterSchool (treated as previous day)
+        // Before 4AM → afterSchool, unless there's an overnight slot active
         if hour < 4 {
+            // Check if any slot covers the current time (overnight from previous day)
+            for (index, slot) in slots.enumerated() {
+                if currentSeconds >= slot.startSeconds && currentSeconds < slot.endSeconds {
+                    let remaining = TimeInterval(slot.endSeconds - currentSeconds)
+                    let nextEntry: ClassEntry? = if index + 1 < slots.count {
+                        slots[index + 1].entry
+                    } else {
+                        nil
+                    }
+                    return .inClass(period: slot.period, entry: slot.entry, remaining: remaining, nextEntry: nextEntry, isFood: slot.isFood)
+                }
+            }
             return .afterSchool
         }
 

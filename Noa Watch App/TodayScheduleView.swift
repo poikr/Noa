@@ -10,7 +10,6 @@ struct TodayScheduleView: View {
         let timeString: String
         let startMinutes: Int
         let endMinutes: Int
-        let isExtra: Bool
         let isFood: Bool
     }
 
@@ -31,40 +30,31 @@ struct TodayScheduleView: View {
     }
 
     private func buildItems(for weekday: Weekday) -> [ScheduleItem] {
+        let slots = ScheduleEngine.buildSlots(timetable: store.timetable, weekday: weekday)
         var items: [ScheduleItem] = []
 
-        let classes = store.timetable.todayClasses(for: weekday)
-        for (period, entry) in classes {
-            guard period < store.timetable.periodTimes.count else { continue }
-            let pt = store.timetable.periodTimes[period]
+        for (index, slot) in slots.enumerated() {
+            let periodLabel: String
+            if slot.period >= 0, slot.period < store.timetable.periodTimes.count {
+                let pt = store.timetable.periodTimes[slot.period]
+                periodLabel = pt.name.isEmpty ? "\(slot.period + 1)" : pt.name
+            } else {
+                periodLabel = "\(index + 1)"
+            }
+            let startMin = slot.startSeconds / 60
+            let endMin = slot.endSeconds / 60
+            let timeString = String(format: "%02d:%02d~%02d:%02d", startMin / 60, startMin % 60, endMin / 60, endMin % 60)
             items.append(ScheduleItem(
-                id: "class_\(period)",
-                entry: entry,
-                periodLabel: pt.name.isEmpty ? "\(period + 1)" : pt.name,
-                timeString: pt.displayString,
-                startMinutes: pt.startTotalMinutes,
-                endMinutes: pt.endTotalMinutes,
-                isExtra: false,
-                isFood: entry.isFood
+                id: "slot_\(index)",
+                entry: slot.entry,
+                periodLabel: periodLabel,
+                timeString: timeString,
+                startMinutes: startMin,
+                endMinutes: endMin,
+                isFood: slot.isFood
             ))
         }
 
-        let extras = store.timetable.todayExtraSchedules(for: weekday)
-        for extra in extras {
-            let entry = ClassEntry(subject: extra.name, teacher: "", classroom: "", colorName: extra.colorName)
-            items.append(ScheduleItem(
-                id: "extra_\(extra.id)",
-                entry: entry,
-                periodLabel: "•",
-                timeString: extra.displayTimeString,
-                startMinutes: extra.startTotalMinutes,
-                endMinutes: extra.endTotalMinutes,
-                isExtra: true,
-                isFood: false
-            ))
-        }
-
-        items.sort { $0.startMinutes < $1.startMinutes }
         return items
     }
 
@@ -131,7 +121,7 @@ struct TodayScheduleView: View {
                     .padding(.vertical, 6)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(isNow ? (item.isExtra ? Color.purple.opacity(0.2) : Color.green.opacity(0.2)) : Color.clear)
+                            .fill(isNow ? Color.green.opacity(0.2) : Color.clear)
                     )
                     .opacity(isPast ? 0.4 : 1.0)
                 }

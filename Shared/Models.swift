@@ -38,6 +38,10 @@ enum Weekday: Int, Codable, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    var previousDay: Weekday {
+        Weekday(rawValue: rawValue == 1 ? 7 : rawValue - 1)!
+    }
+
     static func from(date: Date) -> Weekday? {
         let weekday = Calendar.current.component(.weekday, from: date)
         return Weekday(rawValue: weekday)
@@ -157,8 +161,9 @@ struct ExtraSchedule: Codable, Equatable, Sendable, Identifiable {
     var endMinute: Int
     var weekday: Weekday
     var colorName: String
+    var spansNextDay: Bool
 
-    init(id: UUID = UUID(), name: String, startHour: Int, startMinute: Int, endHour: Int, endMinute: Int, weekday: Weekday, colorName: String = "blue") {
+    init(id: UUID = UUID(), name: String, startHour: Int, startMinute: Int, endHour: Int, endMinute: Int, weekday: Weekday, colorName: String = "blue", spansNextDay: Bool = false) {
         self.id = id
         self.name = name
         self.startHour = startHour
@@ -167,13 +172,30 @@ struct ExtraSchedule: Codable, Equatable, Sendable, Identifiable {
         self.endMinute = endMinute
         self.weekday = weekday
         self.colorName = colorName
+        self.spansNextDay = spansNextDay
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        startHour = try container.decode(Int.self, forKey: .startHour)
+        startMinute = try container.decode(Int.self, forKey: .startMinute)
+        endHour = try container.decode(Int.self, forKey: .endHour)
+        endMinute = try container.decode(Int.self, forKey: .endMinute)
+        weekday = try container.decode(Weekday.self, forKey: .weekday)
+        colorName = try container.decode(String.self, forKey: .colorName)
+        spansNextDay = try container.decodeIfPresent(Bool.self, forKey: .spansNextDay) ?? false
     }
 
     var startTotalMinutes: Int { startHour * 60 + startMinute }
     var endTotalMinutes: Int { endHour * 60 + endMinute }
 
     var displayTimeString: String {
-        String(format: "%02d:%02d~%02d:%02d", startHour, startMinute, endHour, endMinute)
+        if spansNextDay {
+            return String(format: "%02d:%02d~익일 %02d:%02d", startHour, startMinute, endHour, endMinute)
+        }
+        return String(format: "%02d:%02d~%02d:%02d", startHour, startMinute, endHour, endMinute)
     }
 
     var color: Color {

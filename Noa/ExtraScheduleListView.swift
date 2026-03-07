@@ -81,6 +81,7 @@ struct ExtraScheduleEditSheet: View {
     @State private var endHour: Int
     @State private var endMinute: Int
     @State private var colorName: String
+    @State private var spansNextDay: Bool
 
     init(store: TimetableStore, schedule: ExtraSchedule?) {
         self.store = store
@@ -92,6 +93,7 @@ struct ExtraScheduleEditSheet: View {
         _endHour = State(initialValue: schedule?.endHour ?? 18)
         _endMinute = State(initialValue: schedule?.endMinute ?? 0)
         _colorName = State(initialValue: schedule?.colorName ?? "purple")
+        _spansNextDay = State(initialValue: schedule?.spansNextDay ?? false)
     }
 
     var body: some View {
@@ -124,7 +126,11 @@ struct ExtraScheduleEditSheet: View {
                     .frame(height: 120)
                 }
 
-                Section("종료 시간") {
+                Section {
+                    Toggle("다음날까지", isOn: $spansNextDay)
+                }
+
+                Section(spansNextDay ? "종료 시간 (익일)" : "종료 시간") {
                     HStack {
                         Picker("시", selection: $endHour) {
                             ForEach(0..<24, id: \.self) { h in
@@ -190,7 +196,8 @@ struct ExtraScheduleEditSheet: View {
                             endHour: endHour,
                             endMinute: endMinute,
                             weekday: weekday,
-                            colorName: colorName
+                            colorName: colorName,
+                            spansNextDay: spansNextDay
                         )
                         if let existingId = schedule?.id {
                             if let idx = store.timetable.extraSchedules.firstIndex(where: { $0.id == existingId }) {

@@ -104,7 +104,7 @@ struct CircularView: View {
 
     var body: some View {
         switch state {
-        case .inClass(_, let entry, let remaining, _, let isFood):
+        case .inClass(_, let entry, let remaining, _, let periodFlag):
             ZStack {
                 AccessoryWidgetBackground()
                 VStack(spacing: 1) {
@@ -112,10 +112,10 @@ struct CircularView: View {
                         .font(.system(.caption2, design: .rounded).bold())
                         .minimumScaleFactor(0.5)
                         .lineLimit(1)
-                        .foregroundStyle(urgencyColor(remaining: remaining, normal: isFood ? .orange : .green))
+                        .foregroundStyle(urgencyColor(remaining: remaining, normal: periodFlag.isMeal ? .orange : periodFlag == .selfStudy ? .blue : .green))
                     countdownText(remaining: remaining, entryDate: entryDate)
                         .font(.system(.title3, design: .rounded).bold())
-                        .foregroundStyle(urgencyColor(remaining: remaining, normal: isFood ? .orange : .primary))
+                        .foregroundStyle(urgencyColor(remaining: remaining, normal: periodFlag.isMeal ? .orange : periodFlag == .selfStudy ? .blue : .primary))
                 }
             }
 
@@ -223,8 +223,8 @@ struct RectangularView: View {
     @ViewBuilder
     private var content: some View {
         switch state {
-        case .inClass(let period, let entry, let remaining, let nextEntry, let isFood):
-            if isFood {
+        case .inClass(let period, let entry, let remaining, let nextEntry, let periodFlag):
+            if periodFlag != .none {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 4) {
                         Image(systemName: "circle.fill")
@@ -458,11 +458,11 @@ struct CornerView: View {
 
     var body: some View {
         switch state {
-        case .inClass(_, let entry, let remaining, _, let isFood):
+        case .inClass(_, let entry, let remaining, _, let periodFlag):
             VStack {
                 countdownText(remaining: remaining, entryDate: entryDate)
                     .font(.system(.title, design: .rounded).bold())
-                    .foregroundStyle(urgencyColor(remaining: remaining, normal: isFood ? .orange : .primary))
+                    .foregroundStyle(urgencyColor(remaining: remaining, normal: periodFlag.isMeal ? .orange : periodFlag == .selfStudy ? .blue : .primary))
                 Text(entry.subject)
                     .font(.system(size: 10))
             }

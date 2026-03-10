@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TodayScheduleView: View {
     var store: TimetableStore
+    var mealStore: MealStore
 
     struct ScheduleItem: Identifiable {
         let id: String
@@ -10,7 +11,7 @@ struct TodayScheduleView: View {
         let timeString: String
         let startMinutes: Int
         let endMinutes: Int
-        let isFood: Bool
+        let periodFlag: PeriodFlag
     }
 
     var body: some View {
@@ -51,7 +52,7 @@ struct TodayScheduleView: View {
                 timeString: timeString,
                 startMinutes: startMin,
                 endMinutes: endMin,
-                isFood: slot.isFood
+                periodFlag: slot.periodFlag
             ))
         }
 
@@ -76,49 +77,72 @@ struct TodayScheduleView: View {
                     let lastPastItem = items.last(where: { currentMinutes >= $0.endMinutes })
                     let isLastEnded = isPast && item.id == lastPastItem?.id
 
-                    HStack(spacing: 6) {
-                        Text(item.periodLabel)
-                            .font(.caption2.bold())
-                            .frame(width: 16)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.5)
+                    VStack(spacing: 0) {
+                        HStack(spacing: 6) {
+                            Text(item.periodLabel)
+                                .font(.caption2.bold())
+                                .frame(width: 16)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
 
-                        VStack(alignment: .leading, spacing: 1) {
-                            HStack(spacing: 3) {
-                                if item.isFood {
-                                    Image(systemName: "fork.knife")
-                                        .font(.system(size: 8))
-                                        .foregroundStyle(.orange)
+                            VStack(alignment: .leading, spacing: 1) {
+                                HStack(spacing: 3) {
+                                    if let icon = item.periodFlag.icon {
+                                        Image(systemName: icon)
+                                            .font(.system(size: 8))
+                                            .foregroundStyle(item.periodFlag.isMeal ? .orange : .blue)
+                                    }
+                                    Text(item.entry.subject)
+                                        .font(.caption.bold())
+                                    if isNow {
+                                        Text("NOW")
+                                            .font(.system(size: 8, weight: .bold))
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 1)
+                                            .background(.green)
+                                            .foregroundStyle(.white)
+                                            .clipShape(Capsule())
+                                    } else if isLastEnded {
+                                        Text("END")
+                                            .font(.system(size: 8, weight: .bold))
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 1)
+                                            .background(.red)
+                                            .foregroundStyle(.white)
+                                            .clipShape(Capsule())
+                                    }
                                 }
-                                Text(item.entry.subject)
-                                    .font(.caption.bold())
-                                if isNow {
-                                    Text("NOW")
-                                        .font(.system(size: 8, weight: .bold))
-                                        .padding(.horizontal, 4)
-                                        .padding(.vertical, 1)
-                                        .background(.green)
-                                        .foregroundStyle(.white)
-                                        .clipShape(Capsule())
-                                } else if isLastEnded {
-                                    Text("END")
-                                        .font(.system(size: 8, weight: .bold))
-                                        .padding(.horizontal, 4)
-                                        .padding(.vertical, 1)
-                                        .background(.red)
-                                        .foregroundStyle(.white)
-                                        .clipShape(Capsule())
-                                }
+                                Text(item.timeString)
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.secondary)
                             }
-                            Text(item.timeString)
-                                .font(.system(size: 9))
-                                .foregroundStyle(.secondary)
-                        }
 
-                        Spacer()
+                            Spacer()
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+
+                        // Show meal items inline for meal periods
+                        if item.periodFlag.isMeal {
+                            let meals = mealStore.mealsForFlag(item.periodFlag)
+                            if let meal = meals.first, !meal.dishes.isEmpty {
+                                VStack(alignment: .leading, spacing: 1) {
+                                    ForEach(meal.dishes.prefix(4), id: \.self) { dish in
+                                        Text(dish)
+                                            .font(.system(size: 9))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    if meal.dishes.count > 4 {
+                                        Text("외 \(meal.dishes.count - 4)개")
+                                            .font(.system(size: 8))
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                }
+                                .padding(.horizontal, 30)
+                                .padding(.bottom, 4)
+                            }
+                        }
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
                             .fill(isNow ? Color.green.opacity(0.2) : Color.clear)

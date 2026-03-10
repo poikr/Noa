@@ -2,13 +2,24 @@ import SwiftUI
 
 struct ContentView: View {
     var store = TimetableStore.shared
+    var mealStore = MealStore.shared
+    @State private var selectedTab = 1
 
     var body: some View {
-        TabView {
-            WatchMainView(store: store)
-            TodayScheduleView(store: store)
+        TabView(selection: $selectedTab) {
+            if mealStore.isConfigured {
+                MealView(mealStore: mealStore)
+                    .tag(0)
+            }
+            WatchMainView(store: store, mealStore: mealStore)
+                .tag(1)
+            TodayScheduleView(store: store, mealStore: mealStore)
+                .tag(2)
+            WeekTimetableView(store: store)
+                .tag(3)
         }
         .tabViewStyle(.verticalPage)
+        .task { await mealStore.fetchTodayMealsIfNeeded() }
     }
 }
 
@@ -31,6 +42,7 @@ private func entryDetail(_ entry: ClassEntry) -> String? {
 
 struct WatchMainView: View {
     var store: TimetableStore
+    var mealStore: MealStore
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1.0)) { context in
@@ -54,18 +66,54 @@ struct WatchMainView: View {
     @ViewBuilder
     private func watchContent(for state: ScheduleState) -> some View {
         switch state {
-        case .inClass(let period, let entry, let remaining, let nextEntry, let isFood):
-            if isFood {
-                // Food flag: render like break time (show next class info)
+        case .inClass(let period, let entry, let remaining, let nextEntry, let periodFlag):
+            if periodFlag != .none {
+                // Flagged period (meal/self-study): render like break time style
                 VStack(spacing: 6) {
                     HStack(spacing: 4) {
+                        if let icon = periodFlag.icon {
+                            Image(systemName: icon)
+                                .font(.system(size: 8))
+                                .foregroundStyle(urgencyColor(remaining: remaining, normal: .orange))
+                        }
                         Circle().fill(urgencyColor(remaining: remaining, normal: .orange)).frame(width: 8, height: 8)
-                        Text(entry.subject)
+                        Text(periodFlag.displayName)
                             .font(.caption2)
                             .foregroundStyle(urgencyColor(remaining: remaining, normal: .orange))
                     }
 
-                    if let next = nextEntry {
+                    if periodFlag.isMeal {
+                        let meals = mealStore.mealsForFlag(periodFlag)
+                        if let meal = meals.first {
+                            VStack(spacing: 1) {
+                                ForEach(meal.dishes.prefix(3), id: \.self) { dish in
+                                    Text(dish)
+                                        .font(.system(size: 10))
+                                        .lineLimit(1)
+                                }
+                                if meal.dishes.count > 3 {
+                                    Text("외 \(meal.dishes.count - 3)개")
+                                        .font(.system(size: 9))
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        } else if let next = nextEntry {
+                            VStack(spacing: 2) {
+                                Text(next.subject)
+                                    .font(.title3.bold())
+                                    .lineLimit(1)
+                                if let detail = entryDetail(next) {
+                                    Text(detail)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                            }
+                        } else {
+                            Text("마지막 수업")
+                                .font(.title3.bold())
+                        }
+                    } else if let next = nextEntry {
                         VStack(spacing: 2) {
                             Text(next.subject)
                                 .font(.title3.bold())
@@ -173,7 +221,6 @@ struct WatchMainView: View {
 
         case .goingToSchool(let firstEntry, let arrivalRemaining, let classRemaining):
             if arrivalRemaining > 1800 {
-                // More than 30 min before arrival
                 VStack(spacing: 8) {
                     Image(systemName: "sunrise")
                         .font(.title3)
@@ -190,7 +237,6 @@ struct WatchMainView: View {
                 }
                 .padding()
             } else if arrivalRemaining > 180 {
-                // 30 min to 3 min before arrival
                 VStack(spacing: 6) {
                     HStack(spacing: 4) {
                         Circle().fill(.orange).frame(width: 8, height: 8)
@@ -210,7 +256,6 @@ struct WatchMainView: View {
                 }
                 .padding()
             } else {
-                // 3 min or less before arrival
                 VStack(spacing: 6) {
                     HStack(spacing: 4) {
                         Circle().fill(.red).frame(width: 8, height: 8)
@@ -293,6 +338,136 @@ struct WatchMainView: View {
                     .foregroundStyle(.secondary)
             }
             .padding()
+        }
+    }
+}
+
+// MARK: - Meal View
+
+struct MealView: View {
+    var mealStore: MealStore
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 8) {
+                HStack {
+                    Text("오늘의 급식")
+                        .font(.caption2.bold())
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button {
+                        Task { await mealStore.refreshMeals() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.caption2)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(mealStore.isLoading)
+                }
+                .padding(.horizontal, 8)
+
+                if mealStore.isLoading {
+                    ProgressView()
+                        .padding()
+                } else if mealStore.todayMeals.isEmpty {
+                    Text("급식 정보가 없습니다")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding()
+                } else {
+                    ForEach(mealStore.todayMeals) { meal in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Image(systemName: "fork.knife")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.orange)
+                                Text(meal.mealName)
+                                    .font(.caption.bold())
+                                Spacer()
+                                Text(meal.calorie)
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.secondary)
+                            }
+                            ForEach(meal.dishes, id: \.self) { dish in
+                                Text(dish)
+                                    .font(.system(size: 11))
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.orange.opacity(0.1))
+                        )
+                        .padding(.horizontal, 4)
+                    }
+                }
+
+                if let error = mealStore.errorMessage {
+                    Text(error)
+                        .font(.system(size: 9))
+                        .foregroundStyle(.red)
+                        .padding(.horizontal, 8)
+                }
+            }
+            .padding(.vertical, 4)
+        }
+    }
+}
+
+// MARK: - Week Timetable View
+
+struct WeekTimetableView: View {
+    var store: TimetableStore
+    private let weekdays: [Weekday] = [.monday, .tuesday, .wednesday, .thursday, .friday]
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 6) {
+                Text("주간 시간표")
+                    .font(.caption2.bold())
+                    .foregroundStyle(.secondary)
+                    .padding(.bottom, 2)
+
+                // Compact grid: columns = weekdays, rows = periods
+                Grid(alignment: .center, horizontalSpacing: 1, verticalSpacing: 1) {
+                    // Header row
+                    GridRow {
+                        Color.clear.frame(width: 14)
+                            .gridCellUnsizedAxes(.vertical)
+                        ForEach(weekdays) { day in
+                            Text(day.displayName)
+                                .font(.system(size: 9, weight: .bold))
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+
+                    // Period rows
+                    ForEach(0..<store.timetable.periodCount, id: \.self) { period in
+                        GridRow {
+                            Text("\(period + 1)")
+                                .font(.system(size: 8, weight: .bold))
+                                .frame(width: 14)
+                                .foregroundStyle(.secondary)
+
+                            ForEach(weekdays) { day in
+                                let entry = store.timetable.classEntry(for: day, period: period)
+                                Text(entry.isEmpty ? "" : entry.subject)
+                                    .font(.system(size: 8))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.5)
+                                    .frame(maxWidth: .infinity, minHeight: 18)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 3)
+                                            .fill(entry.isEmpty ? Color.gray.opacity(0.15) : entry.color.opacity(0.25))
+                                    )
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 2)
+            }
+            .padding(.vertical, 4)
         }
     }
 }

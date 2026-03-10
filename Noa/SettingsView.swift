@@ -21,6 +21,7 @@ struct TimetableDocument: Transferable {
 struct SettingsView: View {
     var store = TimetableStore.shared
     var connectivity = ConnectivityManager.shared
+    var mealStore = MealStore.shared
     @State private var showResetAlert = false
     @State private var showImporter = false
     @State private var showExportError = false
@@ -29,12 +30,97 @@ struct SettingsView: View {
     @State private var showImportSuccess = false
     @State private var showPasteImport = false
     @State private var pasteText = ""
+    @State private var apiKeyInput = ""
+    @State private var schoolSearchQuery = ""
+    @State private var schoolSearchResults: [SchoolInfo] = []
+    @State private var isSearching = false
+    @State private var searchError: String?
 
     private let minuteOptions = [1, 3, 5, 10, 15]
 
     var body: some View {
         NavigationStack {
             Form {
+                Section("NEIS 급식 API") {
+                    HStack {
+                        Text("API Key")
+                        Spacer()
+                        TextField("API Key 입력", text: $apiKeyInput)
+                            .multilineTextAlignment(.trailing)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                    }
+                    .onAppear { apiKeyInput = mealStore.apiKey }
+                    .onChange(of: apiKeyInput) { _, newValue in
+                        mealStore.apiKey = newValue
+                        ConnectivityManager.shared.sendTimetable()
+                    }
+
+                    HStack {
+                        TextField("학교 검색", text: $schoolSearchQuery)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .onSubmit { searchSchools() }
+                        Button("검색") { searchSchools() }
+                            .disabled(schoolSearchQuery.trimmingCharacters(in: .whitespaces).isEmpty || apiKeyInput.isEmpty)
+                    }
+
+                    if isSearching {
+                        HStack {
+                            ProgressView()
+                            Text("검색 중...")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if let error = searchError {
+                        Text(error)
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    }
+
+                    ForEach(schoolSearchResults) { school in
+                        Button {
+                            mealStore.selectedSchool = school
+                            schoolSearchResults = []
+                            schoolSearchQuery = ""
+                            ConnectivityManager.shared.sendTimetable()
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack {
+                                    Text(school.schoolName)
+                                        .font(.body)
+                                    Text(school.schoolKind)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Text(school.address)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                        .foregroundStyle(.primary)
+                    }
+
+                    if let school = mealStore.selectedSchool {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("선택된 학교")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text("\(school.schoolName) (\(school.schoolKind))")
+                            }
+                            Spacer()
+                            Button("해제", role: .destructive) {
+                                mealStore.selectedSchool = nil
+                                ConnectivityManager.shared.sendTimetable()
+                            }
+                            .font(.caption)
+                        }
+                    }
+                }
+
                 Section("등교 시간") {
                     HStack {
                         Text("등교 시간")
@@ -247,6 +333,24 @@ struct SettingsView: View {
             } message: {
                 Text("시간표를 성공적으로 불러왔습니다.")
             }
+        }
+    }
+
+    private func searchSchools() {
+        let query = schoolSearchQuery.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty, !apiKeyInput.isEmpty else { return }
+        isSearching = true
+        searchError = nil
+        schoolSearchResults = []
+        Task {
+            do {
+                let results = try await NEISService.searchSchools(query: query, apiKey: apiKeyInput)
+                schoolSearchResults = results
+                if results.isEmpty { searchError = "검색 결과가 없습니다." }
+            } catch {
+                searchError = error.localizedDescription
+            }
+            isSearching = false
         }
     }
 }

@@ -15,6 +15,7 @@ struct TimetableGridView: View {
     var store = TimetableStore.shared
     @State private var editingSlot: EditingSlot?
     @State private var editingPeriod: EditingPeriod?
+    private let weekdays: [Weekday] = [.monday, .tuesday, .wednesday, .thursday, .friday]
 
     var body: some View {
         NavigationStack {
@@ -25,7 +26,7 @@ struct TimetableGridView: View {
                         Color.clear
                             .frame(width: 44)
                             .gridCellUnsizedAxes(.vertical)
-                        ForEach(Weekday.allCases) { day in
+                        ForEach(weekdays) { day in
                             Text(day.displayName)
                                 .font(.subheadline.bold())
                                 .frame(maxWidth: .infinity)
@@ -63,7 +64,7 @@ struct TimetableGridView: View {
                             .buttonStyle(.plain)
 
                             // Class cells
-                            ForEach(Weekday.allCases) { day in
+                            ForEach(weekdays) { day in
                                 let entry = store.timetable.classEntry(for: day, period: period)
                                 Button {
                                     editingSlot = EditingSlot(weekday: day, period: period)

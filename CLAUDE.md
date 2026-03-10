@@ -52,7 +52,7 @@ iPhone (edit timetable)
 
 All model types use custom `init(from decoder:)` with `decodeIfPresent` for fields added after v1. When adding new fields to `Codable` models, always use `decodeIfPresent` with a sensible default so that JSON from older versions still decodes. Currently optional fields:
 - `PeriodTime.name` (default: `""`)
-- `ClassEntry.isFood` (default: `false`)
+- `ClassEntry.periodFlag` (default: `.none`; migrates old `isFood: true` → `.selfStudy`)
 - `Timetable.extraSchedules` (default: `[]`)
 - `Timetable.arrivalHour` / `arrivalMinute` (default: `8` / `30`)
 

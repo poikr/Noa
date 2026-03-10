@@ -94,6 +94,36 @@ struct PeriodTime: Codable, Equatable, Sendable {
     }
 }
 
+// MARK: - PeriodFlag
+
+enum PeriodFlag: String, Codable, CaseIterable, Identifiable, Sendable {
+    case none = "none"
+    case lunch = "lunch"
+    case dinner = "dinner"
+    case selfStudy = "selfStudy"
+
+    nonisolated var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .none: "해당 없음"
+        case .lunch: "중식"
+        case .dinner: "석식"
+        case .selfStudy: "자습"
+        }
+    }
+
+    var icon: String? {
+        switch self {
+        case .lunch, .dinner: "fork.knife"
+        case .selfStudy: "book"
+        case .none: nil
+        }
+    }
+
+    var isMeal: Bool { self == .lunch || self == .dinner }
+}
+
 // MARK: - ClassEntry
 
 struct ClassEntry: Codable, Equatable, Sendable {
@@ -101,14 +131,18 @@ struct ClassEntry: Codable, Equatable, Sendable {
     var teacher: String
     var classroom: String
     var colorName: String
-    var isFood: Bool
+    var periodFlag: PeriodFlag
 
-    init(subject: String, teacher: String, classroom: String, colorName: String, isFood: Bool = false) {
+    enum CodingKeys: String, CodingKey {
+        case subject, teacher, classroom, colorName, periodFlag, isFood
+    }
+
+    init(subject: String, teacher: String, classroom: String, colorName: String, periodFlag: PeriodFlag = .none) {
         self.subject = subject
         self.teacher = teacher
         self.classroom = classroom
         self.colorName = colorName
-        self.isFood = isFood
+        self.periodFlag = periodFlag
     }
 
     init(from decoder: Decoder) throws {
@@ -117,10 +151,25 @@ struct ClassEntry: Codable, Equatable, Sendable {
         teacher = try container.decode(String.self, forKey: .teacher)
         classroom = try container.decode(String.self, forKey: .classroom)
         colorName = try container.decode(String.self, forKey: .colorName)
-        isFood = try container.decodeIfPresent(Bool.self, forKey: .isFood) ?? false
+        if let flag = try container.decodeIfPresent(PeriodFlag.self, forKey: .periodFlag) {
+            periodFlag = flag
+        } else if let isFood = try container.decodeIfPresent(Bool.self, forKey: .isFood) {
+            periodFlag = isFood ? .selfStudy : .none
+        } else {
+            periodFlag = .none
+        }
     }
 
-    static let empty = ClassEntry(subject: "", teacher: "", classroom: "", colorName: "blue")
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(subject, forKey: .subject)
+        try container.encode(teacher, forKey: .teacher)
+        try container.encode(classroom, forKey: .classroom)
+        try container.encode(colorName, forKey: .colorName)
+        try container.encode(periodFlag, forKey: .periodFlag)
+    }
+
+    static let empty = ClassEntry(subject: "", teacher: "", classroom: "", colorName: "blue", periodFlag: .none)
 
     var isEmpty: Bool { subject.trimmingCharacters(in: .whitespaces).isEmpty }
 
@@ -307,4 +356,36 @@ struct Timetable: Codable, Equatable, Sendable {
         ]
         return Timetable(periodCount: 7, periodTimes: defaultTimes, slots: [:])
     }()
+}
+
+// MARK: - SchoolInfo
+
+struct SchoolInfo: Codable, Equatable, Sendable, Identifiable {
+    var officeCode: String      // ATPT_OFCDC_SC_CODE
+    var schoolCode: String      // SD_SCHUL_CODE
+    var schoolName: String      // SCHUL_NM
+    var schoolKind: String      // SCHUL_KND_SC_NM (초/중/고)
+    var address: String         // ORG_RDNMA
+
+    nonisolated var id: String { "\(officeCode)_\(schoolCode)" }
+}
+
+// MARK: - MealInfo
+
+struct MealInfo: Codable, Equatable, Sendable, Identifiable {
+    var date: String            // YYYYMMDD
+    var mealCode: String        // MMEAL_SC_CODE (1=조식, 2=중식, 3=석식)
+    var mealName: String        // MMEAL_SC_NM
+    var dishes: [String]        // DDISH_NM split by <br/>
+    var calorie: String         // CAL_INFO
+
+    nonisolated var id: String { "\(date)_\(mealCode)" }
+
+    var mealType: PeriodFlag {
+        switch mealCode {
+        case "2": .lunch
+        case "3": .dinner
+        default: .none
+        }
+    }
 }

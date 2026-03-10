@@ -24,10 +24,21 @@ class ConnectivityManager: NSObject, @preconcurrency WCSessionDelegate {
         guard session.activationState == .activated else { return }
         guard let data = try? JSONEncoder().encode(TimetableStore.shared.timetable) else { return }
 
-        let context: [String: Any] = [
+        var context: [String: Any] = [
             "timetable": data,
             "notification_minutes": TimetableStore.shared.notificationMinutesBefore,
         ]
+
+        // Also sync NEIS meal settings
+        let mealStore = MealStore.shared
+        if !mealStore.apiKey.isEmpty {
+            context["neis_api_key"] = mealStore.apiKey
+        }
+        if let school = mealStore.selectedSchool,
+           let schoolData = try? JSONEncoder().encode(school) {
+            context["neis_school"] = schoolData
+        }
+
         try? session.updateApplicationContext(context)
 
         if session.isReachable {
@@ -74,9 +85,26 @@ class ConnectivityManager: NSObject, @preconcurrency WCSessionDelegate {
         guard let data = context["timetable"] as? Data,
               let timetable = try? JSONDecoder().decode(Timetable.self, from: data) else { return }
         let minutes = context["notification_minutes"] as? Int ?? 5
+
+        // Extract NEIS meal settings
+        let apiKey = context["neis_api_key"] as? String
+        var school: SchoolInfo?
+        if let schoolData = context["neis_school"] as? Data {
+            school = try? JSONDecoder().decode(SchoolInfo.self, from: schoolData)
+        }
+
         Task { @MainActor in
             TimetableStore.shared.timetable = timetable
             TimetableStore.shared.notificationMinutesBefore = minutes
+
+            // Update meal settings if present
+            if let apiKey {
+                MealStore.shared.apiKey = apiKey
+            }
+            if let school {
+                MealStore.shared.selectedSchool = school
+            }
+
             self.lastSyncDate = Date()
         }
     }

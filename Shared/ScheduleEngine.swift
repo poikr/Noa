@@ -1,7 +1,7 @@
 import Foundation
 
 enum ScheduleState: Equatable, Sendable {
-    case inClass(period: Int, entry: ClassEntry, remaining: TimeInterval, nextEntry: ClassEntry?, isFood: Bool)
+    case inClass(period: Int, entry: ClassEntry, remaining: TimeInterval, nextEntry: ClassEntry?, periodFlag: PeriodFlag)
     case breakTime(nextPeriod: Int, nextEntry: ClassEntry, remaining: TimeInterval)
     case goingToSchool(firstEntry: ClassEntry, arrivalRemaining: TimeInterval, classRemaining: TimeInterval)
     case beforeSchool(firstPeriod: Int, firstEntry: ClassEntry, remaining: TimeInterval)
@@ -16,7 +16,7 @@ enum ScheduleEngine {
         let endSeconds: Int
         let entry: ClassEntry
         let period: Int // -1 for extra schedules
-        let isFood: Bool
+        let periodFlag: PeriodFlag
         let isExtra: Bool
     }
 
@@ -32,7 +32,7 @@ enum ScheduleEngine {
                 endSeconds: pt.endHour * 3600 + pt.endMinute * 60,
                 entry: entry,
                 period: period,
-                isFood: entry.isFood,
+                periodFlag: entry.periodFlag,
                 isExtra: false
             ))
         }
@@ -47,7 +47,7 @@ enum ScheduleEngine {
                     endSeconds: 24 * 3600,
                     entry: entry,
                     period: -1,
-                    isFood: false,
+                    periodFlag: .none,
                     isExtra: true
                 ))
             } else {
@@ -56,7 +56,7 @@ enum ScheduleEngine {
                     endSeconds: extra.endHour * 3600 + extra.endMinute * 60,
                     entry: entry,
                     period: -1,
-                    isFood: false,
+                    periodFlag: .none,
                     isExtra: true
                 ))
             }
@@ -72,7 +72,7 @@ enum ScheduleEngine {
                 endSeconds: extra.endHour * 3600 + extra.endMinute * 60,
                 entry: entry,
                 period: -1,
-                isFood: false,
+                periodFlag: .none,
                 isExtra: true
             ))
         }
@@ -94,7 +94,7 @@ enum ScheduleEngine {
                         endSeconds: slot.endSeconds,
                         entry: slot.entry,
                         period: slot.period,
-                        isFood: slot.isFood,
+                        periodFlag: slot.periodFlag,
                         isExtra: slot.isExtra
                     ))
                 }
@@ -135,7 +135,7 @@ enum ScheduleEngine {
                     } else {
                         nil
                     }
-                    return .inClass(period: slot.period, entry: slot.entry, remaining: remaining, nextEntry: nextEntry, isFood: slot.isFood)
+                    return .inClass(period: slot.period, entry: slot.entry, remaining: remaining, nextEntry: nextEntry, periodFlag: slot.periodFlag)
                 }
             }
             return .afterSchool
@@ -170,7 +170,7 @@ enum ScheduleEngine {
                 } else {
                     nil
                 }
-                return .inClass(period: slot.period, entry: slot.entry, remaining: remaining, nextEntry: nextEntry, isFood: slot.isFood)
+                return .inClass(period: slot.period, entry: slot.entry, remaining: remaining, nextEntry: nextEntry, periodFlag: slot.periodFlag)
             }
         }
 
